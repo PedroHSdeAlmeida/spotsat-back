@@ -1,0 +1,272 @@
+openapi: 3.0.0
+info:
+  title: Aplicação de Mapas
+  version: 1.0.0
+paths:
+  /login:
+    post:
+      summary: Efetua login e retorna um token JWT.
+      tags:
+        - Autenticação
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                senha:
+                  type: string
+              required:
+                - email
+                - senha
+            example:
+              email: admin@admin.com
+              senha: admin123
+      responses:
+        '200':
+          description: Login bem-sucedido.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '400':
+          description: Requisição inválida.
+        '401':
+          description: Credenciais inválidas.
+        '500':
+          description: Erro interno do servidor.
+  /polygons:
+    post:
+      summary: Cria um novo polígono.
+      tags:
+        - Polígonos
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeoJSON'
+            examples:
+              example-1:
+                $ref: '#/components/examples/PolygonExample'
+      responses:
+        '201':
+          description: Polígono criado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poligono'
+        '400':
+          description: Requisição inválida.
+        '500':
+          description: Erro interno do servidor.
+    get:
+      summary: Lista todos os polígonos.
+      tags:
+        - Polígonos
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de polígonos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Poligono'
+        '500':
+          description: Erro interno do servidor.
+  /polygons/search:
+    get:
+      summary: Busca polígonos por localização.
+      tags:
+        - Polígonos
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: latitude
+          schema:
+            type: number
+          required: true
+        - in: query
+          name: longitude
+          schema:
+            type: number
+          required: true
+        - in: query
+          name: raio
+          schema:
+            type: number
+          required: true
+      responses:
+        '200':
+          description: Polígonos encontrados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Poligono'
+        '400':
+          description: Requisição inválida.
+        '500':
+          description: Erro interno do servidor.
+  /polygons/{id}:
+    get:
+      summary: Obtém um polígono pelo ID.
+      tags:
+        - Polígonos
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Polígono encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poligono'
+        '404':
+          description: Polígono não encontrado.
+        '500':
+          description: Erro interno do servidor.
+    put:
+      summary: Atualiza um polígono existente.
+      tags:
+        - Polígonos
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GeoJSON'
+            examples:
+              example-1:
+                $ref: '#/components/examples/PolygonExample'
+      responses:
+        '200':
+          description: Polígono atualizado com sucesso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Poligono'
+        '400':
+          description: Requisição inválida.
+        '404':
+          description: Polígono não encontrado.
+        '500':
+          description: Erro interno do servidor.
+    delete:
+      summary: Deleta um polígono.
+      tags:
+        - Polígonos
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '204':
+          description: Polígono deletado com sucesso.
+        '404':
+          description: Polígono não encontrado.
+        '500':
+          description: Erro interno do servidor.
+  /polygons/{id}/interests:
+    get:
+      summary: Obtém polígonos dentro de um polígono especificado.
+      tags:
+        - Polígonos
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        '200':
+          description: Polígonos encontrados.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Poligono'
+        '404':
+          description: Polígono não encontrado.
+        '500':
+          description: Erro interno do servidor.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    GeoJSON:
+      type: object
+      properties:
+        type:
+          type: string
+        coordinates:
+          type: array
+      required:
+        - type
+        - coordinates
+    Poligono:
+      type: object
+      properties:
+        id:
+          type: integer
+        geometria:
+          $ref: '#/components/schemas/GeoJSON'
+        usuarioId:
+          type: integer
+      required:
+        - id
+        - geometria
+        - usuarioId
+  examples:
+    PolygonExample:
+      value:
+        type: FeatureCollection
+        features:
+          - type: Feature
+            properties: {}
+            geometry:
+              type: Polygon
+              coordinates:
+                - 
+                  - [-49.31651984805529, -21.846595035891724]
+                  - [-49.31651984805529, -23.812984458793395]
+                  - [-47.036760365395764, -23.812984458793395]
+                  - [-47.036760365395764, -21.846595035891724]
+                  - [-49.31651984805529, -21.846595035891724]
